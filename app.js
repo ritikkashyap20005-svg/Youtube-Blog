@@ -19,7 +19,11 @@ const PORT = process.env.PORT || 8000;
 
 mongoose
   .connect(process.env.MONGO_URL)
-  .then((e) => console.log("MongoDB Connected"));
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => {
+    console.error("MongoDB Error:", err);
+    process.exit(1);
+  });
 
 app.set("view engine", "ejs");
 app.set("views", path.resolve("./views"));

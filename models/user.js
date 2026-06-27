@@ -33,40 +33,37 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", function (next) {
-  const user = this;
+// Password Hashing
+userSchema.pre("save", function () {
+  if (!this.isModified("password")) return;
 
-  if (!user.isModified("password")) return;
-
-  const salt = randomBytes(16).toString();
-  const hashedPassword = createHmac("sha256", salt)
-    .update(user.password)
-    .digest("hex");
+  const salt = randomBytes(16).toString("hex");
 
   this.salt = salt;
-  this.password = hashedPassword;
-
-  next();
+  this.password = createHmac("sha256", salt)
+    .update(this.password)
+    .digest("hex");
 });
 
+// Login
 userSchema.static(
   "matchPasswordAndGenerateToken",
   async function (email, password) {
     const user = await this.findOne({ email });
-    if (!user) throw new Error("User not found!");
 
-    const salt = user.salt;
-    const hashedPassword = user.password;
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-    const userProvidedHash = createHmac("sha256", salt)
+    const userProvidedHash = createHmac("sha256", user.salt)
       .update(password)
       .digest("hex");
 
-    if (hashedPassword !== userProvidedHash)
+    if (userProvidedHash !== user.password) {
       throw new Error("Incorrect Password");
+    }
 
-    const token = createTokenForUser(user);
-    return token;
+    return createTokenForUser(user);
   }
 );
 
