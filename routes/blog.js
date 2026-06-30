@@ -56,5 +56,25 @@ router.post("/", upload.single("coverImage"), async (req, res) => {
   });
   return res.redirect(`/blog/${blog._id}`);
 });
+router.get("/delete/:blogId", async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId);
+
+    if (!blog) {
+      return res.status(404).send("Blog nahi mila!");
+    }
+
+    // Check karein ki kya user ne hi blog banaya hai
+    if (blog.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).send("Aap sirf apne blogs delete kar sakte hain.");
+    }
+
+    await Blog.findByIdAndDelete(req.params.blogId);
+    return res.redirect("/"); 
+  } catch (error) {
+    console.error("Delete Error:", error);
+    return res.status(500).send("Server Error");
+  }
+});
 
 module.exports = router;
