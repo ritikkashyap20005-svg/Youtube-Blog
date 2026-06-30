@@ -29,13 +29,23 @@ router.get("/logout", (req, res) => {
 });
 
 router.post("/signup", async (req, res) => {
-  const { fullName, email, password } = req.body;
-  await User.create({
-    fullName,
-    email,
-    password,
-  });
-  return res.redirect("/");
+  try {
+    const { fullName, email, password } = req.body;
+    
+    // Yahan try-catch add kiya hai
+    await User.create({
+      fullName,
+      email,
+      password,
+    });
+    
+    return res.redirect("/");
+  } catch (error) {
+    // Agar error aata hai (jaise duplicate email), toh signup page hi wapis dikhayein
+    return res.render("signup", {
+      error: "Error: Email already exists or invalid data.",
+    });
+  }
 });
 
 module.exports = router;
